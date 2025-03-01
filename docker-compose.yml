@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: meu_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: meu_usuario
+      POSTGRES_PASSWORD: minha_senha
+      POSTGRES_DB: minha_database
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network  # Adiciona o postgres à rede
+
+  api:
+    container_name: meu_bd
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./app:/src/app
+    env_file: .env  # Carrega variáveis de ambiente do arquivo .env
+    environment:
+      - API_PORT=${API_PORT}  # Porta da API do .env
+      - DB_HOST=meu_postgres  # Nome do serviço do banco de dados (contêiner)
+      - DB_PORT=5432  # Porta padrão do PostgreSQL
+      - DB_USER=${DB_USER}  # Usuário do banco de dados do .env
+      - DB_PASSWORD=${DB_PASSWORD}  # Senha do banco de dados do .env
+      - DB_NAME=${DB_NAME}  # Nome do banco de dados do .env
+    ports:
+      - "${API_PORT}:${API_PORT}"  # Expõe a porta da API
+    expose:
+      - "${API_PORT}"  # Expõe internamente para outros serviços
+    stdin_open: true  # Mantém stdin aberto para modo interativo
+    tty: true  # Ativa o terminal interativo
+    networks:
+      - app-network  # Adiciona a API à mesma rede
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge  # Define a rede personalizada
